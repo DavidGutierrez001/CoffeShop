@@ -4,6 +4,7 @@ import {
     SidebarInset,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import * as React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Bell } from "lucide-react"
@@ -14,6 +15,8 @@ import { Button } from "@/components/ui/button"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { ModeToggle } from "@/components/mode-toggle";
+
+import { Toaster } from "@/components/ui/sonner"
 
 import {
     Popover,
@@ -51,6 +54,7 @@ export default function DashboardLayout() {
                     <main className="p-5 lg:p-7 h-full min-h-[calc(100svh-77px)]">
                         <Outlet />
                     </main>
+                    <Toaster />
                 </SidebarInset>
             </SidebarProvider>
         </ThemeProvider>
@@ -108,27 +112,41 @@ function NotificationsPopover() {
     );
 }
 
+const breadcrumbLabels = {
+    "dashboard": "Dashboard",
+    "usuarios": "Usuarios",
+    "pedidos": "Pedidos",
+    "inventario": "Inventario",
+    "productos": "Productos",
+};
 
 function BreadCrumb() {
-
     const location = useLocation();
+    const segments = location.pathname.split("/").filter(Boolean);
 
     return (
         <Breadcrumb>
             <BreadcrumbList>
-                <BreadcrumbItem>
-                    <BreadcrumbLink render={<Link to="/" />}>Inicio</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                    <BreadcrumbLink render={<Link to="/Dashboard" />}>
-                        Dashboard
-                    </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                
-                </BreadcrumbItem>
+                {segments.map((segment, index) => {
+                    const path = "/" + segments.slice(0, index + 1).join("/");
+                    const label = breadcrumbLabels[segment] || segment;
+                    const isLast = index === segments.length - 1;
+
+                    return (
+                        <React.Fragment key={path}>
+                            {index > 0 && <BreadcrumbSeparator />}
+                            <BreadcrumbItem>
+                                {isLast ? (
+                                    <BreadcrumbPage>{label}</BreadcrumbPage>
+                                ) : (
+                                    <BreadcrumbLink>
+                                        {label}
+                                    </BreadcrumbLink>
+                                )}
+                            </BreadcrumbItem>
+                        </React.Fragment>
+                    );
+                })}
             </BreadcrumbList>
         </Breadcrumb>
     )
