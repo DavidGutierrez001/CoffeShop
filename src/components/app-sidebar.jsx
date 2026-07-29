@@ -39,7 +39,7 @@ import { useTheme } from "@/components/theme-provider";
 
 function AvatarWithBadge() {
   return (
-    <Avatar>
+    <Avatar className="size-9">
       <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
       <AvatarFallback>CN</AvatarFallback>
       <AvatarBadge className="bg-green-600 dark:bg-green-800" />
@@ -54,14 +54,45 @@ export function AppSidebar() {
 
   const { theme } = useTheme();
 
-  const itemsMenu = [
-    { label: "Dashboard", path: "/dashboard", icon: <PanelLeft className="size-4" />, beta: true },
-    { label: "Pedidos", path: "/dashboard/pedidos", icon: <ShoppingBag className="size-4" />, beta: true },
-    { label: "Clientes", path: "/dashboard/clientes", icon: <UserRound className="size-4" />, beta: true },
-  ];
-
-  const itemsInventario = [
-    { label: "Productos", path: "/dashboard/inventario/productos", icon: <Box className="size-4" />, beta: true },
+  const items = [
+    {
+      section: "Menú",
+      items: [
+        {
+          label: "Dashboard",
+          path: "/dashboard",
+          icon: <PanelLeft className="size-4" />,
+          beta: true,
+          disabled: false,
+        },
+        {
+          label: "Usuarios",
+          path: "/dashboard/usuarios",
+          icon: <UserRound className="size-4" />,
+          beta: true,
+          disabled: false,
+        },
+        {
+          label: "Pedidos",
+          path: "/dashboard/pedidos",
+          icon: <ShoppingBag className="size-4" />,
+          beta: true,
+          disabled: false,
+        },
+      ],
+    },
+    {
+      section: "Inventario",
+      items: [
+        {
+          label: "Productos",
+          path: "/dashboard/inventario/productos",
+          icon: <Box className="size-4" />,
+          beta: true,
+          disabled: true,
+        },
+      ],
+    },
   ];
 
   const navigate = useNavigate()
@@ -83,67 +114,45 @@ export function AppSidebar() {
       </SidebarHeader>
       <Separator />
       <SidebarContent className="px-3">
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+        {items.map((section, index) => (
+          <div key={section.section}>
+            <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel>{section.section}</SidebarGroupLabel>
 
-          <SidebarMenu>
-            {itemsMenu.map((item) => (
-              <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location.pathname === item.path}
-                  size="xs"
-                  className="ps-3"
-                >
-                  <Link to={item.path}>
-                    {item.icon}
-                    <span>{item.label}</span>
-                    {item.beta && (
-                      <Badge
-                        variant="outline"
-                        className="ml-auto px-2 font-medium"
+              <SidebarMenu>
+                {section.items.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === item.path}
+                      size="xs"
+                      className={location.pathname === item.path ? "pointer-events-none" : ""}
+                    >
+                      <Link
+                        to={item.path}
+                        className={item.disabled ? "pointer-events-none opacity-50" : ""}
                       >
-                        Beta
-                      </Badge>
-                    )}
-                  </Link>
+                        {item.icon}
+                        <span>{item.label}</span>
 
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+                        {item.beta && (
+                          <Badge
+                            variant="outline"
+                            className="ml-auto px-2 font-medium"
+                          >
+                            Beta
+                          </Badge>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
 
-        <Separator />
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel>Inventario</SidebarGroupLabel>
-
-          <SidebarMenu>
-            {itemsInventario.map((item) => (
-              <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location.pathname === item.path}
-                  size="xs"
-                  className="ps-3"
-                >
-                  <Link to={item.path}>
-                    {item.icon}
-                    <span>{item.label}</span>
-                    {item.beta && (
-                      <Badge
-                        variant="outline"
-                        className="ml-auto px-2 font-medium"
-                      >
-                        Beta
-                      </Badge>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+            {index !== items.length - 1 && <Separator />}
+          </div>
+        ))}
       </SidebarContent>
 
       <Separator />
@@ -164,10 +173,10 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent side="top" align="start" className="flex flex-col gap-2 py-3">
+              <DropdownMenuContent side="top" align="end" className="flex flex-col gap-2 py-3 translate-x-1/2">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Menú</DropdownMenuLabel>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem disabled>
                     <Settings />
                     Configuración
                   </DropdownMenuItem>
@@ -178,7 +187,7 @@ export function AppSidebar() {
                     Cuenta
                   </DropdownMenuLabel>
                   <DropdownMenuItem
-                    className="text-destructive"
+                    className="text-destructive hover:bg-destructive/10!"
                     onClick={handleLogout}
                   >
                     <LogOut />
