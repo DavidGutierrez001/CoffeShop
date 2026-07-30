@@ -118,6 +118,7 @@ const breadcrumbLabels = {
     "pedidos": "Pedidos",
     "inventario": "Inventario",
     "productos": "Productos",
+    "detalle": "Detalle",
 };
 
 function BreadCrumb() {
@@ -135,7 +136,7 @@ function BreadCrumb() {
                     return (
                         <React.Fragment key={path}>
                             {index > 0 && <BreadcrumbSeparator />}
-                            <BreadcrumbItem>
+                            <BreadcrumbItem className="text-sm">
                                 {isLast ? (
                                     <BreadcrumbPage>{label}</BreadcrumbPage>
                                 ) : (

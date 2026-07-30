@@ -1,7 +1,7 @@
 import logolight from "@/assets/logo-light.svg";
 import logodark from "@/assets/logo-dark.svg";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { PanelLeft, Box, ShoppingBag, UserRound, Settings, LogOut } from 'lucide-react';
+import { PanelLeft, Package, ShoppingBag, UserRound, Settings, LogOut, Truck, ListCheck, ListSortAscending, Undo2 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +36,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 import { useTheme } from "@/components/theme-provider";
+import { path } from "motion/react-client";
 
 function AvatarWithBadge() {
   return (
@@ -87,7 +88,40 @@ export function AppSidebar() {
         {
           label: "Productos",
           path: "/dashboard/inventario/productos",
-          icon: <Box className="size-4" />,
+          icon: <Package className="size-4" />,
+          beta: true,
+          disabled: false,
+        },
+        {
+          label: "Categorias",
+          path: "/dashboard/inventario/categorias",
+          icon: <ListSortAscending className="size-4" />,
+          beta: true,
+          disabled: true,
+        },
+        {
+          label: "Stock",
+          path: "/dashboard/inventario/stock",
+          icon: <ListCheck className="size-4" />,
+          beta: true,
+          disabled: true,
+        },
+      ],
+    },
+    {
+      section: "Logística",
+      items: [
+        {
+          label: "Envíos",
+          path: "/dashboard/logistica/envios",
+          icon: <Truck className="size-4" />,
+          beta: true,
+          disabled: true,
+        },
+        {
+          label: "Devoluciones",
+          path: "/dashboard/logistica/devoluciones",
+          icon: <Undo2 className="size-4" />,
           beta: true,
           disabled: true,
         },
