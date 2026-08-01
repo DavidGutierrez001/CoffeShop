@@ -1,0 +1,157 @@
+==========================================================================
+PANELSHOP - Panel de administracion de e-commerce
+==========================================================================
+Descripcion general del proyecto, estructura de carpetas y explicacion
+de cada una de las partes que lo componen.
+
+------------------------------------------------------------------
+1. TECNOLOGIAS Y HERRAMIENTAS
+------------------------------------------------------------------
+- React 19 (SPA) con Vite 8 como bundler.
+- React Router v7 para el enrutamiento.
+- Tailwind CSS v4 (estilos) con el alias "@/" apuntando a src/.
+- shadcn/ui (estilo radix-vega) para los componentes de UI.
+- Radix UI como base de los componentes accesibles.
+- lucide-react para iconos.
+- recharts para graficos (dashboard).
+- react-hook-form + zod para formularios y validacion.
+- sonner para notificaciones (toasts).
+- Alias de importacion "@/" configurado en jsconfig.json y vite.config.js.
+
+Datos: la app consume la API publica de DummyJSON
+(https://dummyjson.com) para productos, pedidos (carts) y usuarios.
+
+------------------------------------------------------------------
+2. RUTAS DE LA APLICACION
+------------------------------------------------------------------
+Definidas en src/router/AppRoutes.jsx con createBrowserRouter.
+
+  /login                          -> Login (ruta publica)
+  /                               -> Redirige a Login (ruta publica)
+  /dashboard                      -> Dashboard (KPIs y graficos)
+  /dashboard/usuarios             -> Listado de usuarios
+  /dashboard/pedidos              -> Listado de pedidos
+  /dashboard/inventario/productos -> Listado de productos
+  /dashboard/inventario/productos/detalle/:id -> Detalle de producto
+  *                               -> NotFound
+
+La proteccion de rutas se maneja en:
+  - PublicRoutes.jsx  -> si ya hay sesion, redirige a /dashboard.
+  - PrivateRoutes.jsx -> si NO hay sesion, redirige a /login.
+La sesion se guarda en localStorage con la clave "sesion".
+
+------------------------------------------------------------------
+3. ESTRUCTURA DE CARPETAS (src/)
+------------------------------------------------------------------
+
+src/
+  assets/         Archivos estaticos (imagenes, logos, svg).
+                    logo-light.svg / logo-dark.svg -> logos de la app.
+                    react.svg / vite.svg -> generados por el template.
+
+  components/     Componentes compartidos de la aplicacion.
+    ui/           Componentes base de shadcn/ui (button, card, table,
+                  dialog, dropdown-menu, badge, avatar, sidebar, etc.).
+                    Son componentes genericos y reutilizables.
+    AppSidebar.jsx    Barra lateral de navegacion del dashboard.
+                      Incluye el menu (Dashboard, Usuarios, Pedidos),
+                      Inventario (Productos, Categorias, Stock) y
+                      Logistica (Envios, Devoluciones), el logo (cambia
+                      segun el tema claro/oscuro) y el cierre de sesion.
+    ModeToggle.jsx    Boton para alternar entre tema claro, oscuro y
+                      sistema.
+
+  context/        Contextos de React (estado global).
+    ThemeContext.jsx  Provee el tema de la app (light/dark/system).
+                      Expone <ThemeProvider> y el hook useTheme().
+                      Guarda la preferencia en localStorage
+                      (clave "vite-ui-theme").
+
+  data/           Datos estaticos / de ejemplo.
+    DashboardNotifications.json  Notificaciones de ejemplo mostradas
+                                 en el popover de campanita.
+
+  hooks/          Hooks personalizados.
+    use-mobile.js Hook que detecta si la pantalla es movil
+                  (breakpoint 768px). Se usa en el sidebar.
+
+  layout/         Layouts que envuelven las paginas.
+    DashboardLayout.jsx Layout principal del dashboard: sidebar +
+                         header (breadcrumb, notificaciones, modo
+                         claro/oscuro) + <Outlet /> con las paginas.
+
+  lib/            Utilidades generales.
+    utils.js      Funcion cn() para combinar clases (clsx + tailwind-
+                  merge). Usada por los componentes de shadcn/ui.
+
+  pages/          Paginas/ vistas de la aplicacion.
+    Login.jsx                     Inicio de sesion (prueba@gmail.com /
+                                  123456). Valida con zod.
+    Dashboard.jsx                 Vista principal con KPIs y graficos
+                                  (barras de ventas por mes, pies).
+    DashboardUsuarios.jsx         Tabla de usuarios con acciones.
+    DashboardPedidos.jsx          Tabla de pedidos + formulario para
+                                  crear un pedido (dialog).
+    DashboardProductos.jsx        Tabla de productos (link al detalle).
+    DashboardDetalleProducto.jsx  Detalle completo de un producto:
+                                  imagen, info basica, precio con
+                                  descuento, rating, stock,
+                                  especificaciones y resenas.
+    NotFound.jsx                  Pagina 404.
+
+  router/         Configuracion de rutas y proteccion.
+    AppRoutes.jsx     Definicion de todas las rutas.
+    PublicRoutes.jsx  Redirige autenticados fuera de rutas publicas.
+    PrivateRoutes.jsx Bloquea rutas sin sesion activa.
+
+  services/       Capa de datos: toda la logica de consumo de la API.
+                  Las paginas NO hacen fetch directo, usan estos
+                  servicios.
+    api.js                Cliente base. Centraliza la URL
+                          (https://dummyjson.com) y la funcion
+                          request() con manejo de errores.
+    productService.js     getProducts() y getProduct(id).
+    cartService.js        getCarts(limit) y addCart({userId, products}).
+    userService.js        getUsers(limit).
+
+  App.jsx         Archivo heredado del template. Está vacío y no se
+                  usa (main.jsx monta el RouterProvider directamente).
+                  Puede eliminarse.
+  index.css       Estilos globales (variables de tema y utilidades de
+                  Tailwind).
+  main.jsx        Punto de entrada: monta <RouterProvider> en el DOM.
+
+------------------------------------------------------------------
+4. ARCHIVOS DE CONFIGURACION EN LA RAIZ
+------------------------------------------------------------------
+
+  package.json        Dependencias y scripts (dev, build, lint, preview).
+  pnpm-lock.yaml      Bloqueo de versiones de dependencias (pnpm).
+  vite.config.js      Configuracion de Vite (alias @/, plugin de
+                      Tailwind y React).
+  tailwindcss         V4: configurado dentro de index.css, no hay
+                      archivo tailwind.config.
+  jsconfig.json       Alias "@/*" para imports.
+  components.json     Configuracion de shadcn/ui.
+  eslint.config.js    Reglas de ESLint.
+  index.html          HTML base de la SPA.
+  vercel.json         Configuracion de deploy en Vercel.
+  .gitignore          Archivos/carpetas ignorados por git.
+  README.md           Documentacion del template.
+
+------------------------------------------------------------------
+5. COMANDOS UTILES
+------------------------------------------------------------------
+
+  pnpm install    Instala las dependencias.
+  pnpm dev        Levanta el servidor de desarrollo.
+  pnpm build      Compila la app para produccion.
+  pnpm lint       Ejecuta ESLint (revisa codigo).
+  pnpm preview    Sirve el build de produccion en local.
+
+------------------------------------------------------------------
+6. CREDENCIALES DE PRUEBA (LOGIN)
+------------------------------------------------------------------
+  Correo:   prueba@gmail.com
+  Password: 123456
+==========================================================================

@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { Badge } from "@/components/ui/badge"
+import { getProducts } from "@/services/productService"
 
 import {
     Table,
@@ -50,9 +51,7 @@ function GetProducts() {
     useEffect(() => {
         const getData = async () => {
             try {
-                const response = await fetch("https://dummyjson.com/products");
-                const data = await response.json();
-                setProducts(data.products);
+                setProducts(await getProducts());
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -67,7 +66,7 @@ function GetProducts() {
         return (
             <div className="space-y-3">
                 <Skeleton className="h-10 w-full bg-accent" />
-                {Array.from({ length: 10 }).map((_, index) => (
+                {Array.from({ length: 15 }).map((_, index) => (
                     <Skeleton key={index} className="h-7 w-full rounded-md bg-accent/60" />
                 ))}
             </div>
@@ -83,8 +82,6 @@ function GetProducts() {
                     <TableHead className="w-25">Producto</TableHead>
                     <TableHead>Marca</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>SKU</TableHead>
                     <TableHead>Precio</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead className="text-center">Acciones</TableHead>
@@ -113,8 +110,6 @@ function GetProducts() {
                                 </Badge>)
                             }
                         </TableCell>
-                        <TableCell>{product.category}</TableCell>
-                        <TableCell>{product.sku}</TableCell>
                         <TableCell>${product.price.toFixed()}</TableCell>
                         <TableCell>{product.stock}</TableCell>
 
@@ -126,8 +121,8 @@ function GetProducts() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>
-                                        <Link to={`/dashboard/inventario/productos/detalle/${product.id}`}>Ver detalles</Link>
+                                    <DropdownMenuItem asChild>
+                                        <Link to={`/dashboard/inventario/productos/detalle/${product.id}`}>Ver más</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem disabled className="text-destructive">Eliminar</DropdownMenuItem>

@@ -1,6 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { CircleCheck, MoreVerticalIcon, Plus } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import {
     Table,
     TableBody,
@@ -10,51 +10,98 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-
 import { toast } from "sonner"
-
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-
 import {
     Field,
-    FieldContent,
     FieldDescription,
-    FieldError,
     FieldGroup,
     FieldLabel,
-    FieldLegend,
-    FieldSeparator,
     FieldSet,
     FieldTitle,
 } from "@/components/ui/field"
-
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
 import { Input } from "@/components/ui/input"
-
-import { Spinner } from "@/components/ui/spinner"
-
 import { Button } from "@/components/ui/button"
+
+const STORAGE_KEY = "user_pedidos";
+
+const ORDER_STATUSES = ["Pendiente", "Enviado", "Entregado", "Cancelado"];
+
+const STATUS_STYLES = {
+    Pendiente: "bg-orange-100 text-orange-500 dark:bg-orange-500/20 dark:text-orange-300",
+    Enviado: "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+    Entregado: "bg-green-50 text-green-700 dark:bg-green-950/50 dark:text-green-300",
+    Cancelado: "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+};
+
+const SEED_ORDERS = [
+    {
+        id: 1,
+        title: "Essence Mascara Lash Princess",
+        userName: "Leanne Graham",
+        price: 9.99,
+        quantity: 2,
+        status: "Entregado",
+        createdAt: "2026-07-01T10:00:00.000Z",
+    },
+    {
+        id: 2,
+        title: "iPhone 9",
+        userName: "Ervin Howell",
+        price: 549,
+        quantity: 1,
+        status: "Enviado",
+        createdAt: "2026-07-05T14:30:00.000Z",
+    },
+    {
+        id: 3,
+        title: "Samsung Universe 9",
+        userName: "Clementine Bauch",
+        price: 1249,
+        quantity: 1,
+        status: "Pendiente",
+        createdAt: "2026-07-12T09:15:00.000Z",
+    },
+];
+
+function loadOrders() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === null) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_ORDERS));
+        return SEED_ORDERS;
+    }
+    try {
+        return JSON.parse(stored);
+    } catch {
+        return [];
+    }
+}
 
 // Componente principal de la página de pedidos
 export default function DashboardPedidos() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [orders, setOrders] = useState(loadOrders);
+
+    function saveOrders(nextOrders) {
+        setOrders(nextOrders);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextOrders));
+    }
 
     return (
         <>
@@ -70,24 +117,21 @@ export default function DashboardPedidos() {
                     <DialogContent>
                         <OrderForm
                             onClose={() => setIsDialogOpen(false)}
-                            onOrderCreated={() => setRefreshKey((k) => k + 1)}
+                            onOrderCreated={(order) => saveOrders([order, ...orders])}
                         />
                     </DialogContent>
                 </Dialog>
             </div>
-            <GetOrders key={refreshKey} />
+            <OrdersTable orders={orders} onChange={saveOrders} />
         </>
     )
 }
 
-const STORAGE_KEY = 'user_pedidos';
-
 // Componente para el formulario de creación de pedidos
 function OrderForm({ onClose, onOrderCreated }) {
-    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        productId: "",
-        userId: "",
+        title: "",
+        userName: "",
         quantity: "",
         price: "",
     });
@@ -100,60 +144,35 @@ function OrderForm({ onClose, onOrderCreated }) {
         }));
     }
 
-    async function handleSubmit(e) {
+    function handleSubmit(e) {
         e.preventDefault();
 
-        const { productId, userId, quantity, price } = formData;
+        const { title, userName, quantity, price } = formData;
 
-        if (!productId || !userId || !quantity || !price) {
+        if (!title.trim() || !userName.trim() || !quantity || !price) {
             alert("Todos los campos son obligatorios");
             return;
         }
 
-        try {
-            setLoading(true);
+        const newOrder = {
+            id: Date.now(),
+            title: title.trim(),
+            userName: userName.trim(),
+            price: Number(price),
+            quantity: Number(quantity),
+            status: "Pendiente",
+            createdAt: new Date().toISOString(),
+        };
 
-            const res = await fetch('https://dummyjson.com/carts/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: Number(userId),
-                    products: [{ id: Number(productId), quantity: Number(quantity) }],
-                }),
-            });
+        toast("Pedido agregado correctamente", {
+            icon: <CircleCheck className="size-5 text-green-500" />,
+            description: "Pedido #" + newOrder.id + " guardado correctamente",
+            position: "top-center",
+        });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Error al agregar pedido');
-            }
-
-            const newOrder = {
-                ...data,
-                localPrice: Number(price),
-                localUserId: Number(userId),
-                localProductId: Number(productId),
-                createdAt: new Date().toISOString(),
-            };
-
-            const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            stored.unshift(newOrder);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-
-            toast("Pedido agregado correctamente", {
-                icon: <CircleCheck className="size-5 text-green-500" />,
-                description: "Pedido #" + data.id + " guardado",
-                position: "top-center",
-            });
-
-            setFormData({ productId: "", userId: "", quantity: "", price: "" });
-            onOrderCreated?.();
-            onClose();
-        } catch (error) {
-            alert(`Error al agregar pedido: ${error.message}`);
-        }
-
-        setLoading(false);
+        setFormData({ title: "", userName: "", quantity: "", price: "" });
+        onOrderCreated?.(newOrder);
+        onClose();
     }
 
     return (
@@ -163,12 +182,12 @@ function OrderForm({ onClose, onOrderCreated }) {
                 <FieldDescription>Comienza agregando los detalles del nuevo pedido.</FieldDescription>
                 <FieldGroup>
                     <Field>
-                        <FieldLabel htmlFor="userId">ID Usuario</FieldLabel>
-                        <Input required id="userId" autoComplete="off" name="userId" value={formData.userId} onChange={giveData} />
+                        <FieldLabel htmlFor="title">Nombre del producto</FieldLabel>
+                        <Input required id="title" autoComplete="off" name="title" value={formData.title} onChange={giveData} />
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="productId">ID Producto</FieldLabel>
-                        <Input required id="productId" autoComplete="off" name="productId" value={formData.productId} onChange={giveData} />
+                        <FieldLabel htmlFor="userName">Cliente</FieldLabel>
+                        <Input required id="userName" autoComplete="off" name="userName" value={formData.userName} onChange={giveData} />
                     </Field>
                     <FieldGroup className="flex flex-row">
                         <Field>
@@ -183,78 +202,32 @@ function OrderForm({ onClose, onOrderCreated }) {
                 </FieldGroup>
             </FieldSet>
             <Button className="h-12" type="submit">
-                {loading ? <Spinner /> : 'Agregar pedido'}
+                Agregar pedido
             </Button>
         </form>
     )
 }
 
-
-// Obtener los pedidos desde la API y mostrarlos como tabla
-function GetOrders() {
-    const [orders, setOrders] = useState([]);
-    const [users, setUsers] = useState({});
-    const [loading, setLoading] = useState(true);
-
-    function DeleteOrder(cartId) {
-        localStorage.removeItem(STORAGE_KEY);
-
-        const updatedOrders = orders.filter(
-            (order) => order.id !== cartId
-        );
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
-        setOrders(updatedOrders);
+// Tabla de pedidos almacenados en localStorage
+function OrdersTable({ orders, onChange }) {
+    function DeleteOrder(orderId) {
+        onChange(orders.filter((order) => order.id !== orderId));
         toast("Pedido eliminado correctamente", {
             icon: <CircleCheck className="size-5 text-green-500" />,
-            description: "Pedido #" + cartId + " eliminado",
+            description: "Pedido #" + orderId + " eliminado",
             position: "top-center",
         });
     }
 
-    useEffect(() => {
-        const getData = async () => {
-            try {
-                setLoading(true);
-
-                const [cartsRes, usersRes] = await Promise.all([
-                    fetch('https://dummyjson.com/carts?limit=10'),
-                    fetch('https://dummyjson.com/users?limit=0'),
-                ]);
-
-                const cartsData = await cartsRes.json();
-                const usersData = await usersRes.json();
-
-                const usersMap = {};
-                usersData.users.forEach((user) => {
-                    usersMap[user.id] = user;
-                });
-
-                const localOrders = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-
-                const allOrders = [...localOrders, ...cartsData.carts];
-
-                setOrders(allOrders);
-                setUsers(usersMap);
-            } catch (error) {
-                console.error("Error al obtener datos:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        getData();
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="space-y-3">
-                <Skeleton className="h-10 w-full bg-accent" />
-                {Array.from({ length: 5 }).map((_, index) => (
-                    <Skeleton key={index} className="h-7 w-full rounded-md bg-accent/60" />
-                ))}
-            </div>
-        );
+    function ChangeStatus(orderId, status) {
+        onChange(orders.map((order) => (
+            order.id === orderId ? { ...order, status } : order
+        )));
+        toast("Estado actualizado", {
+            icon: <CircleCheck className="size-5 text-green-500" />,
+            description: "Pedido #" + orderId + " ha sido actualizado a " + status,
+            position: "top-center",
+        });
     }
 
     return (
@@ -268,51 +241,63 @@ function GetOrders() {
                     <TableHead>Precio</TableHead>
                     <TableHead>Cantidad</TableHead>
                     <TableHead>Total</TableHead>
+                    <TableHead className="text-center">Estado</TableHead>
                     <TableHead>Acción</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {orders.map((cart) => {
-                    const userId = cart.localUserId ?? cart.userId;
-                    const user = users[userId];
-                    const userName = user ? `${user.firstName} ${user.lastName}` : `Usuario #${userId}`;
-                    const title = cart.products?.[0]?.title ?? `Producto #${cart.localProductId}`;
-                    const price = cart.localPrice ?? cart.products?.[0]?.price ?? 0;
-                    const quantity = cart.products?.[0]?.quantity ?? 0;
-                    const total = price * quantity;
+                {orders.map((order) => (
+                    <TableRow key={order.id}>
+                        <TableCell className="text-center">{order.id}</TableCell>
+                        <TableCell>{order.title}</TableCell>
+                        <TableCell>{order.userName}</TableCell>
+                        <TableCell>${Number(order.price).toFixed()}</TableCell>
+                        <TableCell>{order.quantity}</TableCell>
+                        <TableCell>${(Number(order.price) * Number(order.quantity)).toFixed()}</TableCell>
+                        <TableCell className="text-center">
+                            <Badge className={STATUS_STYLES[order.status] ?? STATUS_STYLES.Pendiente}>
+                                {order.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost">
+                                        <MoreVerticalIcon />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger>Cambiar estado</DropdownMenuSubTrigger>
+                                        <DropdownMenuSubContent>
+                                            <DropdownMenuRadioGroup
+                                                value={order.status}
+                                                onValueChange={(value) => ChangeStatus(order.id, value)}
+                                            >
+                                                {ORDER_STATUSES.map((option) => (
+                                                    <DropdownMenuRadioItem key={option} value={option}>
+                                                        {option}
+                                                    </DropdownMenuRadioItem>
+                                                ))}
+                                            </DropdownMenuRadioGroup>
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem disabled>
+                                        Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onClick={() => DeleteOrder(order.id)}
+                                        className="text-destructive">
 
-                    return (
-                        <TableRow key={cart.id + (cart.createdAt ?? '')}>
-                            <TableCell className="text-center">{cart.id}</TableCell>
-                            <TableCell>{title}</TableCell>
-                            <TableCell>{userName}</TableCell>
-                            <TableCell>${Number(price).toFixed()}</TableCell>
-                            <TableCell>{quantity}</TableCell>
-                            <TableCell>${total.toFixed()}</TableCell>
-                            <TableCell>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost">
-                                            <MoreVerticalIcon />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem disabled>
-                                            Editar
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem
-                                            onClick={() => DeleteOrder(cart.id)}
-                                            className="text-destructive">
-
-                                            Eliminar
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                    );
-                })}
+                                        Eliminar
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                ))}
             </TableBody>
         </Table>
     );

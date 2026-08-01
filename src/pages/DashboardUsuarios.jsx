@@ -2,6 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { MoreVerticalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getUsers } from "@/services/userService";
 import {
     Table,
     TableBody,
@@ -138,12 +139,10 @@ function GetUsers() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const getUsers = async () => {
+        const loadUsers = async () => {
             try {
                 setLoading(true);
-                const res = await fetch("https://dummyjson.com/users?limit=20");
-                const data = await res.json();
-                setUsers(data.users);
+                setUsers(await getUsers(20));
             } catch (error) {
                 console.error("Error al obtener usuarios:", error);
             } finally {
@@ -151,14 +150,14 @@ function GetUsers() {
             }
         };
 
-        getUsers();
+        loadUsers();
     }, []);
 
     if (loading) {
         return (
             <div className="space-y-3">
                 <Skeleton className="h-10 w-full bg-accent" />
-                {Array.from({ length: 10 }).map((_, index) => (
+                {Array.from({ length: 15 }).map((_, index) => (
                     <Skeleton key={index} className="h-7 w-full rounded-md bg-accent/60" />
                 ))}
             </div>
@@ -187,23 +186,52 @@ function GetUsers() {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{user.age}</TableCell>
-                        
-                        <TableCell className="text-center">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="size-8">
-                                        <MoreVerticalIcon />
-                                    </Button>
-                                </DropdownMenuTrigger>
 
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem disabled>Edit</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem variant="destructive">
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                        <TableCell className="text-center">
+                            <Dialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="size-8">
+                                            <MoreVerticalIcon />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem disabled>
+                                            Modificar
+                                        </DropdownMenuItem>
+
+                                        <DropdownMenuSeparator />
+
+                                        <DialogTrigger asChild>
+                                            <DropdownMenuItem
+                                                onSelect={(e) => e.preventDefault()}
+                                                variant="destructive"
+                                            >
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </DialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>¿Estás seguro?</DialogTitle>
+                                        <DialogDescription>
+                                            Esta acción no se puede deshacer. Se eliminará el registro permanentemente.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <DialogFooter>
+                                        <DialogClose asChild>
+                                            <Button variant="outline">Cancelar</Button>
+                                        </DialogClose>
+
+                                        <DialogClose asChild>
+                                            <Button variant="destructive">Eliminar</Button>
+                                        </DialogClose>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                         </TableCell>
                     </TableRow>
                 ))}

@@ -1,6 +1,7 @@
 import logolight from "@/assets/logo-light.svg";
 import logodark from "@/assets/logo-dark.svg";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { PanelLeft, Package, ShoppingBag, UserRound, Settings, LogOut, Truck, ListCheck, ListSortAscending, Undo2 } from 'lucide-react';
 import {
   Sidebar,
@@ -35,13 +36,12 @@ import { Separator } from "@/components/ui/separator";
 
 import { Badge } from "@/components/ui/badge";
 
-import { useTheme } from "@/components/theme-provider";
-import { path } from "motion/react-client";
+import { useTheme } from "@/context/ThemeContext";
 
 function AvatarWithBadge() {
   return (
-    <Avatar className="size-9">
-      <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+    <Avatar className="size-8">
+      <AvatarImage src="https://github.com/shadcn.png" className="rounded-md" alt="@shadcn" />
       <AvatarFallback>CN</AvatarFallback>
       <AvatarBadge className="bg-green-600 dark:bg-green-800" />
     </Avatar>
@@ -130,15 +130,16 @@ export function AppSidebar() {
   ];
 
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   const handleLogout = () => {
-    localStorage.removeItem("sesion");
+    logout();
     navigate("/", { replace: true });
   }
 
   return (
 
-    <Sidebar>
+    <Sidebar id="sidebar-trigger">
       <SidebarHeader className="flex flex-col items-center justify-center my-7">
         {theme === "light" ? (
           <img src={logodark} className="h-9" alt="Logo" />
@@ -196,18 +197,19 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="h-12">
+                <SidebarMenuButton className="h-12 gap-3">
                   <AvatarWithBadge />
-                  <div className="ms-3 flex flex-col items-start justify-center">
-                    <span>prueba</span>
-                    <span className="text-xs text-foreground/60">
-                      prueba@gmail.com
+                  <div className="flex flex-col items-start justify-center">
+                    <span>{user ? `${user.firstName} ${user.lastName}` : "Usuario"}</span>
+                    <span className="text-xs text-foreground/50 ">
+                      {user?.email ?? "Sin sesión"}
                     </span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent side="top" align="end" className="flex flex-col gap-2 py-3 translate-x-1/2">
+              <DropdownMenuContent side="top" align="end" className="flex flex-col gap-2 p-3">
+
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Menú</DropdownMenuLabel>
                   <DropdownMenuItem disabled>
@@ -221,8 +223,8 @@ export function AppSidebar() {
                     Cuenta
                   </DropdownMenuLabel>
                   <DropdownMenuItem
-                    className="text-destructive hover:bg-destructive/10!"
                     onClick={handleLogout}
+                    variant="destructive"
                   >
                     <LogOut />
                     Cerrar sesión
