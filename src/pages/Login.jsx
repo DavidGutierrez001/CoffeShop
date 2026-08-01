@@ -10,12 +10,13 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner"
+import { useAuth } from "@/context/AuthContext";
 
 // Esquema de validación para el formulario de inicio de sesión
 const formSchema = z.object({
-    email: z
+    username: z
         .string()
-        .email("Por favor ingresa un correo electrónico válido."),
+        .min(1, "Por favor ingresa el usuario."),
 
     password: z
         .string()
@@ -25,10 +26,11 @@ const formSchema = z.object({
 // Componente de inicio de sesión
 function Login() {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: "",
+            username: "",
             password: "",
         },
     });
@@ -37,20 +39,14 @@ function Login() {
 
     // Funcion asincrona para manejar el envio del formulario
     async function onSubmit(values) {
-        await new Promise((resolve) =>
-            setTimeout(resolve, 400)
-        );
-
-        console.log(values);
-
-        if (values.email === "prueba@gmail.com" && values.password === "123456") {
-            localStorage.setItem("sesion", "active");
+        try {
+            await login(values.username, values.password);
             navigate("/dashboard");
         }
-        else {
+        catch (error) {
             form.setError("root.serverError", {
                 type: "manual",
-                message: "Correo o contraseña incorrectos. Por favor, inténtalo de nuevo.",
+                message: "Usuario o contraseña incorrectos. Por favor, inténtalo de nuevo.",
             });
         }
     }
@@ -64,17 +60,17 @@ function Login() {
                 >
                     <h2 className="text-4xl md:text-3xl font-bold md:font-semibold">Iniciar sesión</h2>
                     <Controller
-                        name="email"
+                        name="username"
                         control={form.control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor={field.name}>Correo electrónico</FieldLabel>
+                                <FieldLabel htmlFor={field.name}>Usuario</FieldLabel>
                                 <Input
                                     {...field}
                                     id={field.name}
-                                    type="email"
+                                    type="text"
                                     aria-invalid={fieldState.invalid}
-                                    autoComplete="email"
+                                    autoComplete="username"
                                 />
                                 {fieldState.invalid && (
                                     <FieldError errors={[fieldState.error]} />
@@ -107,6 +103,9 @@ function Login() {
                             {form.formState.errors.root.serverError.message}
                         </p>
                     )}
+                    <p className="text-xs text-muted-foreground">
+                        Demo: usuario <span className="font-medium">emilys</span>, contraseña <span className="font-medium">emilyspass</span>
+                    </p>
                     <Button
                         className="group relative h-14 overflow-hidden px-1"
                         type="submit"

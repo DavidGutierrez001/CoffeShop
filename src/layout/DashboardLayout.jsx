@@ -1,20 +1,21 @@
+import * as React from "react";
 import {
     SidebarProvider,
     SidebarTrigger,
     SidebarInset,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import * as React from "react";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { Bell } from "lucide-react"
+import { Bell, MoveLeft } from "lucide-react"
 
 import DashboardNotifications from "@/data/DashboardNotifications.json";
 
 import { Button } from "@/components/ui/button"
 
-import { ThemeProvider } from "@/components/theme-provider"
-import { ModeToggle } from "@/components/mode-toggle";
+import { ThemeProvider } from "@/context/ThemeContext";
+
+import { ModeToggle } from "@/components/ModeToggle";
 
 import { Toaster } from "@/components/ui/sonner"
 
@@ -28,7 +29,6 @@ import {
 
 import {
     Breadcrumb,
-    BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbPage,
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/breadcrumb"
 
 export default function DashboardLayout() {
+
     return (
         <ThemeProvider>
             <SidebarProvider
@@ -63,9 +64,12 @@ export default function DashboardLayout() {
 
 function DashboardHeader() {
     return (
-        <header className="flex items-center px-7 py-5 gap-5 justify-between">
+        <header id="header-dashboard" className="flex items-center px-7 py-5 gap-5 justify-between">
             <div className="flex gap-3 items-center">
                 <SidebarTrigger />
+                
+                <Separator orientation="vertical" />
+
                 <BreadCrumb />
             </div>
             <div className="flex gap-3">
@@ -118,6 +122,7 @@ const breadcrumbLabels = {
     "pedidos": "Pedidos",
     "inventario": "Inventario",
     "productos": "Productos",
+    "detalle": "Detalle producto",
 };
 
 function BreadCrumb() {
@@ -125,29 +130,32 @@ function BreadCrumb() {
     const segments = location.pathname.split("/").filter(Boolean);
 
     return (
-        <Breadcrumb>
-            <BreadcrumbList>
-                {segments.map((segment, index) => {
-                    const path = "/" + segments.slice(0, index + 1).join("/");
-                    const label = breadcrumbLabels[segment] || segment;
-                    const isLast = index === segments.length - 1;
+        <>
+            <Breadcrumb>
+                <BreadcrumbList>
+                    {segments.map((segment, index) => {
+                        const path = "/" + segments.slice(0, index + 1).join("/");
+                        const label = breadcrumbLabels[segment] || segment;
+                        const isLast = index === segments.length - 1;
 
-                    return (
-                        <React.Fragment key={path}>
-                            {index > 0 && <BreadcrumbSeparator />}
-                            <BreadcrumbItem>
+                        return (
+                            <React.Fragment key={path}>
+                                {index > 0 && <BreadcrumbSeparator />}
+
                                 {isLast ? (
                                     <BreadcrumbPage>{label}</BreadcrumbPage>
+                                ) : segment === "detalle" ? (
+                                    <BreadcrumbLink className="cursor-default">{label}</BreadcrumbLink>
                                 ) : (
-                                    <BreadcrumbLink>
-                                        {label}
+                                    <BreadcrumbLink asChild>
+                                        <Link to={path}>{label}</Link>
                                     </BreadcrumbLink>
                                 )}
-                            </BreadcrumbItem>
-                        </React.Fragment>
-                    );
-                })}
-            </BreadcrumbList>
-        </Breadcrumb>
-    )
+                            </React.Fragment>
+                        );
+                    })}
+                </BreadcrumbList>
+            </Breadcrumb>
+        </>
+    );
 }
