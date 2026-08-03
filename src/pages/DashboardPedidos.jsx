@@ -14,6 +14,11 @@ import { toast } from "sonner"
 import {
     Dialog,
     DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+    DialogClose,
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
@@ -38,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+
 
 const STORAGE_KEY = "user_pedidos";
 
@@ -116,6 +122,7 @@ export default function DashboardPedidos() {
                     </DialogTrigger>
                     <DialogContent>
                         <OrderForm
+                            orders={orders}
                             onClose={() => setIsDialogOpen(false)}
                             onOrderCreated={(order) => saveOrders([order, ...orders])}
                         />
@@ -128,7 +135,7 @@ export default function DashboardPedidos() {
 }
 
 // Componente para el formulario de creación de pedidos
-function OrderForm({ onClose, onOrderCreated }) {
+function OrderForm({ orders, onClose, onOrderCreated }) {
     const [formData, setFormData] = useState({
         title: "",
         userName: "",
@@ -154,8 +161,11 @@ function OrderForm({ onClose, onOrderCreated }) {
             return;
         }
 
+        // Agarra el siguiente ID disponible basado en el último pedido y le suma 1, si no hay pedidos, empieza desde 1
+        const nextId = orders.length > 0 ? Math.max(...orders.map((order) => Number(order.id) || 0)) + 1 : 1;
+
         const newOrder = {
-            id: Date.now(),
+            id: nextId,
             title: title.trim(),
             userName: userName.trim(),
             price: Number(price),
@@ -266,7 +276,7 @@ function OrdersTable({ orders, onChange }) {
                                         <MoreVerticalIcon />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                                <DropdownMenuContent className="min-w-50" align="end">
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger>Cambiar estado</DropdownMenuSubTrigger>
                                         <DropdownMenuSubContent>
@@ -283,18 +293,47 @@ function OrdersTable({ orders, onChange }) {
                                         </DropdownMenuSubContent>
                                     </DropdownMenuSub>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem disabled>
+                                    <DropdownMenuItem
+                                        disabled
+                                    >
                                         Editar
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        onClick={() => DeleteOrder(order.id)}
-                                        className="text-destructive">
 
-                                        Eliminar
-                                    </DropdownMenuItem>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <DropdownMenuItem
+                                                className="text-destructive"
+                                                onSelect={(e) => e.preventDefault()}
+                                            >
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>¿Estás seguro?</DialogTitle>
+                                                <DialogDescription>
+                                                    Esta acción no se puede deshacer. Se eliminará el registro permanentemente.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <DialogFooter>
+                                                <DialogClose asChild>
+                                                    <Button variant="outline">Cancelar</Button>
+                                                </DialogClose>
+
+                                                <Button
+                                                    onClick={() => DeleteOrder(order.id)}
+                                                    variant="destructive"
+                                                >
+                                                    Eliminar
+                                                </Button>
+
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+
                         </TableCell>
                     </TableRow>
                 ))}

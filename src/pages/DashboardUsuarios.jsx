@@ -24,6 +24,12 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,7 +132,14 @@ function FormDialog() {
                             </Button>
                         </DialogClose>
 
-                        <Button type="submit" disabled >Agregar usuario</Button>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Button type="submit" disabled >Agregar usuario</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Esta función está deshabilitada porque DummyJSON no permite la creación de nuevos usuarios.</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -197,15 +210,21 @@ function GetUsers() {
                                     </DropdownMenuTrigger>
 
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem disabled>
-                                            Modificar
+                                        <DropdownMenuItem disabled className="pointer-events-auto!">
+                                            <Tooltip>
+                                                <TooltipTrigger className="flex w-full text-start">
+                                                    <span>Modificar</span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Esta función está deshabilitada porque no se permite la modificación de sus datos.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
                                         </DropdownMenuItem>
 
                                         <DropdownMenuSeparator />
 
                                         <DialogTrigger asChild>
                                             <DropdownMenuItem
-                                                onSelect={(e) => e.preventDefault()}
                                                 variant="destructive"
                                             >
                                                 Eliminar
@@ -227,7 +246,14 @@ function GetUsers() {
                                         </DialogClose>
 
                                         <DialogClose asChild>
-                                            <Button variant="destructive">Eliminar</Button>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <Button disabled variant="destructive">Eliminar</Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Esta función está deshabilitada porque no se permite la eliminación de sus datos.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
                                         </DialogClose>
                                     </DialogFooter>
                                 </DialogContent>

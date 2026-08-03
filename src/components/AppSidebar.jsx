@@ -1,3 +1,4 @@
+import { useState } from "react";
 import logolight from "@/assets/logo-light.svg";
 import logodark from "@/assets/logo-dark.svg";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -35,6 +36,19 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 import { Badge } from "@/components/ui/badge";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+
+import { Button } from "@/components/ui/button";
 
 import { useTheme } from "@/context/ThemeContext";
 
@@ -132,7 +146,10 @@ export function AppSidebar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
 
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+
   const handleLogout = () => {
+    setLogoutDialogOpen(false);
     logout();
     navigate("/", { replace: true });
   }
@@ -222,13 +239,34 @@ export function AppSidebar() {
                   <DropdownMenuLabel>
                     Cuenta
                   </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    variant="destructive"
-                  >
-                    <LogOut />
-                    Cerrar sesión
-                  </DropdownMenuItem>
+                  
+                  <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+                    <DialogTrigger asChild>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <LogOut />
+                        Cerrar sesión
+                      </DropdownMenuItem>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>¿Seguro que quieres cerrar sesión?</DialogTitle>
+                        <DialogDescription>
+                          Deberás iniciar sesión nuevamente para acceder a tu cuenta.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button variant="outline">Cancelar</Button>
+                        </DialogClose>
+                        <Button variant="destructive" onClick={handleLogout}>
+                          Cerrar sesión
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
