@@ -15,6 +15,8 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,6 +26,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose
+} from "@/components/ui/dialog"
 
 import { Button } from "@/components/ui/button"
 
@@ -125,7 +138,40 @@ function GetProducts() {
                                         <Link to={`/dashboard/inventario/productos/detalle/${product.id}`}>Ver más</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem disabled className="text-destructive">Eliminar</DropdownMenuItem>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <DropdownMenuItem
+                                                className="text-destructive"
+                                                onSelect={(e) => e.preventDefault()}
+                                            >
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </DialogTrigger>
+
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>¿Estás seguro?</DialogTitle>
+                                                <DialogDescription>
+                                                    Esta acción no se puede deshacer. Se eliminará el registro permanentemente.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <DialogFooter>
+                                                <DialogClose asChild>
+                                                    <Button variant="outline">Cancelar</Button>
+                                                </DialogClose>
+
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                        <Button disabled variant="destructive">Eliminar</Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Esta función está deshabilitada porque no se permite la eliminación de sus datos.</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
