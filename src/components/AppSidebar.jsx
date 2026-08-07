@@ -80,20 +80,6 @@ export function AppSidebar() {
           beta: true,
           disabled: false,
         },
-        {
-          label: "Usuarios",
-          path: "/dashboard/usuarios",
-          icon: <UserRound className="size-4" />,
-          beta: true,
-          disabled: false,
-        },
-        {
-          label: "Pedidos",
-          path: "/dashboard/pedidos",
-          icon: <ShoppingBag className="size-4" />,
-          beta: true,
-          disabled: false,
-        },
       ],
     },
     {
@@ -105,39 +91,6 @@ export function AppSidebar() {
           icon: <Package className="size-4" />,
           beta: true,
           disabled: false,
-        },
-        {
-          label: "Categorias",
-          path: "/dashboard/inventario/categorias",
-          icon: <ListSortAscending className="size-4" />,
-          beta: true,
-          disabled: true,
-        },
-        {
-          label: "Stock",
-          path: "/dashboard/inventario/stock",
-          icon: <ListCheck className="size-4" />,
-          beta: true,
-          disabled: true,
-        },
-      ],
-    },
-    {
-      section: "Logística",
-      items: [
-        {
-          label: "Envíos",
-          path: "/dashboard/logistica/envios",
-          icon: <Truck className="size-4" />,
-          beta: true,
-          disabled: true,
-        },
-        {
-          label: "Devoluciones",
-          path: "/dashboard/logistica/devoluciones",
-          icon: <Undo2 className="size-4" />,
-          beta: true,
-          disabled: true,
         },
       ],
     },
@@ -217,7 +170,7 @@ export function AppSidebar() {
                 <SidebarMenuButton className="h-12 gap-3">
                   <AvatarWithBadge />
                   <div className="flex flex-col items-start justify-center">
-                    <span>{user ? `${user.firstName} ${user.lastName}` : "Usuario"}</span>
+                    <span>{user?.nombre ?? "Usuario"}</span>
                     <span className="text-xs text-foreground/50 ">
                       {user?.email ?? "Sin sesión"}
                     </span>

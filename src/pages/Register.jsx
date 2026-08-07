@@ -10,28 +10,42 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import { useNavigate, Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner"
-import { useAuth } from "@/context/AuthContext";
+import { registerUser } from "@/services/authService";
 
-// Esquema de validación para el formulario de inicio de sesión
+// Esquema de validación para el formulario de registro
 const formSchema = z.object({
+    nombre: z
+        .string()
+        .min(1, "Por favor ingresa tu nombre.")
+        .max(100, "El nombre no puede superar los 100 carácteres."),
+
     email: z
         .string()
-        .min(1, "Por favor ingresa el correo electrónico."),
+        .min(1, "Por favor ingresa el correo electrónico.")
+        .email("Ingresa un correo electrónico válido."),
 
     password: z
         .string()
-        .min(6, "La contraseña debe tener al menos 6 carácteres.")
+        .min(6, "La contraseña debe tener al menos 6 carácteres."),
+
+    confirmPassword: z
+        .string()
+        .min(6, "Repite la contraseña."),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden.",
+    path: ["confirmPassword"],
 });
 
-// Componente de inicio de sesión
-function Login() {
+// Componente de registro
+function Register() {
     const navigate = useNavigate();
-    const { login } = useAuth();
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            nombre: "",
             email: "",
             password: "",
+            confirmPassword: "",
         },
     });
 
@@ -39,14 +53,16 @@ function Login() {
 
     // Funcion asincrona para manejar el envio del formulario
     async function onSubmit(values) {
+        const { confirmPassword, ...data } = values;
+
         try {
-            await login(values.email, values.password);
-            navigate("/dashboard");
+            await registerUser(data);
+            navigate("/login");
         }
         catch (error) {
             form.setError("root.serverError", {
                 type: "manual",
-                message: "Correo o contraseña incorrectos. Por favor, inténtalo de nuevo.",
+                message: error.message || "No se pudo crear la cuenta. Por favor, inténtalo de nuevo.",
             });
         }
     }
@@ -58,7 +74,27 @@ function Login() {
                     className="flex flex-col gap-5"
                     onSubmit={form.handleSubmit(onSubmit)}
                 >
-                    <h2 className="text-4xl md:text-3xl font-bold md:font-semibold">Iniciar sesión</h2>
+                    <h2 className="text-4xl md:text-3xl font-bold md:font-semibold">Crear cuenta</h2>
+                    <Controller
+                        name="nombre"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel htmlFor={field.name}>Nombre completo</FieldLabel>
+                                <Input
+                                    {...field}
+                                    id={field.name}
+                                    type="text"
+                                    aria-invalid={fieldState.invalid}
+                                    autoComplete="name"
+                                />
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+
                     <Controller
                         name="email"
                         control={form.control}
@@ -90,7 +126,27 @@ function Login() {
                                     id={field.name}
                                     type="password"
                                     aria-invalid={fieldState.invalid}
-                                    autoComplete="current-password"
+                                    autoComplete="new-password"
+                                />
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+
+                    <Controller
+                        name="confirmPassword"
+                        control={form.control}
+                        render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel htmlFor={field.name}>Confirmar contraseña</FieldLabel>
+                                <Input
+                                    {...field}
+                                    id={field.name}
+                                    type="password"
+                                    aria-invalid={fieldState.invalid}
+                                    autoComplete="new-password"
                                 />
                                 {fieldState.invalid && (
                                     <FieldError errors={[fieldState.error]} />
@@ -109,7 +165,7 @@ function Login() {
                         type="submit"
                         variant="secondary"
                     >
-                        {isSubmitting ? <Spinner /> : "Iniciar sesión"}
+                        {isSubmitting ? <Spinner /> : "Regístrarse"}
                         <BorderBeam
                             size={70}
                             duration={2}
@@ -121,12 +177,12 @@ function Login() {
             <section className="flex flex-col gap-3 w-full max-w-84">
                 <Separator />
                 <p className="text-sm text-muted-foreground flex flex-col justify-center items-center">
-                    ¿No tienes una cuenta?
+                    ¿Ya tienes una cuenta?
                     <Link
-                        to="/register"
+                        to="/login"
                         className="text-primary hover:underline underline-offset-4 hover:text-primary/80 transition-colors"
                     >
-                        Regístrarse
+                        Inicia sesión
                     </Link>
                 </p>
                 <Separator />
@@ -135,4 +191,4 @@ function Login() {
     );
 }
 
-export default Login;
+export default Register;

@@ -1,12 +1,45 @@
 import { request } from "./api";
 
-async function getProducts() {
-    const data = await request("/products");
-    return data.products;
+const TOKEN_KEY = "token";
+
+async function readProducts() {
+    return await request("/productos");
 }
 
-async function getProduct(id) {
-    return request(`/products/${id}`);
+async function createProduct(product) {
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    return await request("/productos", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(product),
+    });
 }
 
-export { getProducts, getProduct };
+async function updateProduct(productId, product) {
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    return await request(`/productos/${productId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(product),
+    });
+}
+
+async function deleteProduct(productId) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    return await request(`/productos/${productId}`, {
+        method: "DELETE",
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+}
+
+export { readProducts, createProduct, updateProduct, deleteProduct };
