@@ -4,9 +4,6 @@ import { request } from "@/services/api"
 const STORAGE_TOKEN_KEY = "token";
 const STORAGE_USER_KEY = "user";
 
-// Solo se permite iniciar sesión con el primer usuario de dummyjson (id 1)
-const DEFAULT_USER_ID = 1;
-
 const AuthContext = createContext(undefined)
 
 // Proveedor de contexto de autenticación
@@ -24,24 +21,28 @@ export function AuthProvider({
         }
     )
 
-    async function login(username, password) {
+    async function login(email, password) {
+        const body = new URLSearchParams()
+        body.append("username", email)
+        body.append("password", password)
+
         const data = await request("/auth/login", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password, expiresInMins: 60 }),
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body.toString(),
         })
 
-        if (data.id !== DEFAULT_USER_ID) {
-            throw new Error("Solo se permite iniciar sesión con el primer usuario de dummyjson")
-        }
+        const userData = await request("/auth/me", {
+            headers: { Authorization: `Bearer ${data.access_token}` },
+        })
 
-        localStorage.setItem(STORAGE_TOKEN_KEY, data.accessToken)
-        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(data))
+        localStorage.setItem(STORAGE_TOKEN_KEY, data.access_token)
+        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userData))
 
-        setToken(data.accessToken)
-        setUser(data)
+        setToken(data.access_token)
+        setUser(userData)
 
-        return data
+        return userData
     }
 
     function logout() {

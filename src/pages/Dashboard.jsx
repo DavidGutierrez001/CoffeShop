@@ -17,10 +17,10 @@ import { Badge } from "@/components/ui/badge"
 
 function getKpiCardItems() {
     return [
-        { title: "Total Ventas", total: "512", icon: <CircleUserRound className="h-5" strokeWidth={1.5} /> },
-        { title: "Total Pedidos", total: "921", icon: <ClipboardPenLine className="h-5" strokeWidth={1.5} /> },
-        { title: "Total Productos", total: "210", icon: <Package className="h-5" strokeWidth={1.5} /> },
-        { title: "Total Clientes", total: "512", icon: <CircleUserRound className="h-5" strokeWidth={1.5} /> },
+        { disabled: true, title: "Total Ventas", total: "512", icon: <CircleUserRound className="h-5" strokeWidth={1.5} /> },
+        { disabled: true, title: "Total Pedidos", total: "921", icon: <ClipboardPenLine className="h-5" strokeWidth={1.5} /> },
+        { disabled: false, title: "Total Productos", total: "210", icon: <Package className="h-5" strokeWidth={1.5} /> },
+        { disabled: true, title: "Total Clientes", total: "512", icon: <CircleUserRound className="h-5" strokeWidth={1.5} /> },
     ];
 }
 
@@ -106,7 +106,9 @@ export function KPIDashboard() {
     return (
         <div className="flex flex-1 gap-5 flex-wrap">
             {cardItems.map((item, index) => (
-                <Card key={index} className="@container/card min-w-50 flex-1 bg-linear-to-t from-primary/5 to-card shadow-xs outline outline-primary/10">
+                <Card key={index} className={`@container/card min-w-50 flex-1 bg-linear-to-t from-primary/5 to-card shadow-xs outline outline-primary/10
+                    ${item.disabled ? "opacity-40 pointer-events-none" : ""}
+                `}>
                     <CardHeader>
                         <CardDescription>{item.title}</CardDescription>
                         <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
