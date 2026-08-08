@@ -1,4 +1,4 @@
-import { Plus, MoreVerticalIcon, PackageX, SquarePen, Trash } from "lucide-react"
+import { Plus, MoreVerticalIcon, PackageX, SquarePen, Trash, SlidersHorizontal, Upload, X, Image as ImageIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -15,7 +15,8 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-import { createProduct, readProducts, updateProduct, deleteProduct } from "@/services/productService"
+import { createProduct, readProducts, updateProduct, deleteProduct, uploadProductImage, deleteProductImage } from "@/services/productService"
+import { API_BASE_URL } from "@/services/api"
 
 import {
     Empty,
@@ -36,13 +37,14 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
-
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 
 import {
@@ -84,8 +86,33 @@ function formatPrice(value) {
     if (value === null || value === undefined) {
         return "-";
     }
-
     return precioFormatter.format(value);
+}
+
+// Construir la URL completa de la imagen del producto
+function buildImageUrl(imageUrl) {
+    return API_BASE_URL + imageUrl;
+}
+
+function ProductImage({ product }) {
+    const [failed, setFailed] = useState(false);
+
+    if (!product.imagen_url || failed) {
+        return (
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                <ImageIcon className="h-4 w-4" />
+            </div>
+        );
+    }
+
+    return (
+        <img
+            src={buildImageUrl(product.imagen_url)}
+            alt={product.nombre}
+            onError={() => setFailed(true)}
+            className="h-10 w-10 rounded-md object-cover"
+        />
+    );
 }
 
 const productSchema = z.object({
@@ -108,23 +135,56 @@ const productSchema = z.object({
 export default function DashboardProductos() {
     const [openDialog, setOpenDialog] = useState(false);
     const [refresh, setRefresh] = useState(0);
+    const [filterCategoria, setFilterCategoria] = useState("");
 
     return (
         <div>
-            <div className="flex justify-between">
-                <h3 className="mb-5 text-xl font-medium">Productos</h3>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-xl font-medium">Productos</h3>
 
-                <Button
-                    onClick={() => setOpenDialog(true)}
-                    className="h-9"
-                    size="sm"
-                >
-                    <Plus />
-                    Crear producto
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <SlidersHorizontal />
+                                Filtrar
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Categorías</DropdownMenuLabel>
+                            <DropdownMenuCheckboxItem
+                                checked={filterCategoria === ""}
+                                onCheckedChange={() => setFilterCategoria("")}
+                            >
+                                Todas
+                            </DropdownMenuCheckboxItem>
+                            {CATEGORIES.map((category) => (
+                                <DropdownMenuCheckboxItem
+                                    key={category.value}
+                                    checked={filterCategoria === category.value}
+                                    onCheckedChange={() => setFilterCategoria(category.value)}
+                                >
+                                    {category.label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Button
+                        onClick={() => setOpenDialog(true)}
+                        className="h-9"
+                        size="sm"
+                    >
+                        <Plus />
+                        Crear producto
+                    </Button>
+                </div>
             </div>
 
-            <ReadProduct refresh={refresh} />
+            <ReadProduct
+                refresh={refresh}
+                filterCategoria={filterCategoria}
+            />
             <DialogCreateProduct
                 openDialog={openDialog}
                 setOpenDialog={setOpenDialog}
@@ -153,20 +213,67 @@ function DialogCreateProduct({ openDialog, setOpenDialog, onCreated }) {
         },
     })
 
+    const [imagen, setImagen] = useState(null);
+    const [imagenPreview, setImagenPreview] = useState("");
+
+    useEffect(() => {
+        if (!imagenPreview) {
+            return;
+        }
+
+        const url = imagenPreview;
+        return () => URL.revokeObjectURL(url);
+    }, [imagenPreview]);
+
+    // Función para manejar el cambio de imagen
+    const handleImageChange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        setImagen(file);
+        setImagenPreview(URL.createObjectURL(file));
+    };
+
+    // Función para limpiar la imagen seleccionada
+    const clearImage = () => {
+        setImagen(null);
+        setImagenPreview("");
+    };
+
+    // Función para manejar el cambio de estado del diálogo
+    const handleOpenChange = (open) => {
+        setOpenDialog(open);
+        if (!open) {
+            clearImage();
+            reset();
+        }
+    };
+
     const onSubmit = async (values) => {
         try {
-            await createProduct(values)
-            toast.success("Producto creado correctamente")
-            reset()
-            onCreated()
-            setOpenDialog(false)
+            const created = await createProduct(values);
+            const productId = created?._id ?? created?.id;
+
+            if (imagen && productId) {
+                await uploadProductImage(productId, imagen);
+            }
+
+            toast.success("Producto creado correctamente");
         } catch (error) {
-            toast.error(error.message || "No se pudo crear el producto")
+            console.error(error);
+            toast.error(error.message || "Error al crear el producto");
         }
+
+        clearImage()
+        reset()
+        onCreated()
+        setOpenDialog(false)
     }
 
     return (
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <Dialog open={openDialog} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Crear producto</DialogTitle>
@@ -176,6 +283,45 @@ function DialogCreateProduct({ openDialog, setOpenDialog, onCreated }) {
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+                    <Field>
+                        <FieldLabel>Imagen</FieldLabel>
+                        <FieldContent>
+                            {imagenPreview && (
+                                <div className="relative h-32 w-32 overflow-hidden rounded-md border">
+                                    <img
+                                        src={imagenPreview}
+                                        alt="Vista previa del producto"
+                                        className="h-full w-full object-cover"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={clearImage}
+                                        className={'absolute top-1 right-1 bg-background/80 hover:bg-background'}
+                                        aria-label="Quitar imagen"
+                                    >
+                                        <X />
+                                    </Button>
+                                </div>
+                            )}
+                            <Label
+                                htmlFor="producto-imagen"
+                                className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground hover:bg-muted"
+                            >
+                                <Upload />
+                                {imagen ? "Cambiar imagen" : "Subir imagen"}
+                            </Label>
+                            <Input
+                                id="producto-imagen"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageChange}
+                            />
+                        </FieldContent>
+                    </Field>
+
                     <ProductFormFields register={register} control={control} errors={errors} />
 
                     <DialogFooter className="mt-2">
@@ -270,7 +416,6 @@ function ProductFormFields({ register, control, errors }) {
                 name="disponible"
                 render={({ field }) => (
                     <Label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
-
                         <Switch checked={field.value} onCheckedChange={field.onChange} />
                         Disponibilidad
                     </Label>
@@ -280,7 +425,7 @@ function ProductFormFields({ register, control, errors }) {
     )
 }
 
-// Componente para editar / eliminar un producto existente
+// Componente para editar un producto existente
 function DialogEditProduct({ product, setProduct, onUpdated }) {
     const {
         register,
@@ -291,6 +436,20 @@ function DialogEditProduct({ product, setProduct, onUpdated }) {
     } = useForm({
         resolver: zodResolver(productSchema),
     })
+
+    const [imagen, setImagen] = useState(null);
+    const [imagenPreview, setImagenPreview] = useState(() =>
+        product?.imagen_url ? buildImageUrl(product.imagen_url) : ""
+    );
+    const [eliminarImagen, setEliminarImagen] = useState(false);
+    const [prevProduct, setPrevProduct] = useState(product);
+
+    if (product !== prevProduct) {
+        setPrevProduct(product);
+        setImagen(null);
+        setEliminarImagen(false);
+        setImagenPreview(product?.imagen_url ? buildImageUrl(product.imagen_url) : "");
+    }
 
     useEffect(() => {
         if (product) {
@@ -304,9 +463,42 @@ function DialogEditProduct({ product, setProduct, onUpdated }) {
         }
     }, [product, reset])
 
+    useEffect(() => {
+        if (!imagenPreview) {
+            return;
+        }
+
+        const url = imagenPreview;
+        return () => URL.revokeObjectURL(url);
+    }, [imagenPreview]);
+
+    const handleImageChange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        setImagen(file);
+        setEliminarImagen(false);
+        setImagenPreview(URL.createObjectURL(file));
+    };
+
+    const clearImage = () => {
+        setImagen(null);
+        setEliminarImagen(true);
+        setImagenPreview("");
+    };
+
     const onSubmit = async (values) => {
         try {
-            await updateProduct(product._id, values)
+            await updateProduct(product._id, values);
+
+            if (eliminarImagen) {
+                await deleteProductImage(product._id);
+            } else if (imagen) {
+                await uploadProductImage(product._id, imagen);
+            }
+
             toast.success("Producto actualizado correctamente")
             onUpdated(values)
             setProduct(null)
@@ -326,6 +518,45 @@ function DialogEditProduct({ product, setProduct, onUpdated }) {
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+                    <Field>
+                        <FieldLabel>Imagen</FieldLabel>
+                        <FieldContent>
+                            {imagenPreview && (
+                                <div className="relative flex justify-center w-full items-center h-32 overflow-hidden rounded-md border">
+                                    <img
+                                        src={imagenPreview}
+                                        alt="Vista previa del producto"
+                                        className={'h-full w-full object-cover'}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={clearImage}
+                                        className={'absolute top-1 right-1 bg-background/80 hover:bg-background'}
+                                        aria-label="Quitar imagen"
+                                    >
+                                        <X />
+                                    </Button>
+                                </div>
+                            )}
+                            <Label
+                                htmlFor="producto-imagen-editar"
+                                className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground hover:bg-muted"
+                            >
+                                <Upload />
+                                {imagen ? "Cambiar imagen" : "Subir imagen"}
+                            </Label>
+                            <Input
+                                id="producto-imagen-editar"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageChange}
+                            />
+                        </FieldContent>
+                    </Field>
+
                     <ProductFormFields register={register} control={control} errors={errors} />
 
                     <DialogFooter className="mt-2">
@@ -346,14 +577,20 @@ function DialogEditProduct({ product, setProduct, onUpdated }) {
 }
 
 // Componente para leer y mostrar los productos
-function ReadProduct({ refresh }) {
+function ReadProduct({ refresh, filterCategoria }) {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [productToDelete, setProductToDelete] = useState(null);
     const [productToEdit, setProductToEdit] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [localRefresh, setLocalRefresh] = useState(0);
 
+    const filteredProducts = filterCategoria
+        ? products.filter((product) => product.categoria === filterCategoria)
+        : products;
+
+    // Obtener los productos desde el servicio
     useEffect(() => {
         const getData = async () => {
             setLoading(true);
@@ -361,6 +598,7 @@ function ReadProduct({ refresh }) {
             try {
                 const data = await readProducts();
                 setProducts(data);
+
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setError("No se pudieron cargar los productos");
@@ -370,16 +608,19 @@ function ReadProduct({ refresh }) {
         };
 
         getData();
-    }, [refresh]);
+    }, [refresh, localRefresh]);
 
+    // Función para actualizar un producto en la lista después de editarlo
     const handleUpdated = (values) => {
         setProducts((prev) =>
             prev.map((p) =>
                 p._id === productToEdit._id ? { ...p, ...values } : p
             )
         );
+        setLocalRefresh((value) => value + 1);
     };
 
+    // Función para confirmar la eliminación de un producto
     const confirmDelete = async () => {
         if (!productToDelete) {
             return;
@@ -427,57 +668,86 @@ function ReadProduct({ refresh }) {
         <>
             <Table>
                 <TableCaption>Listado de productos de la cafetería</TableCaption>
+
                 <TableHeader>
                     <TableRow>
+                        <TableHead></TableHead>
                         <TableHead>Nombre</TableHead>
-                        <TableHead>Descripcion</TableHead>
+                        <TableHead>Descripción</TableHead>
                         <TableHead>Precio</TableHead>
-                        <TableHead>Categoria</TableHead>
+                        <TableHead>Categoría</TableHead>
                         <TableHead className="text-center">Stock</TableHead>
                         <TableHead className="text-center">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                    {products.map((product) => (
-                        <TableRow key={product._id}>
-                            <TableCell>{product.nombre}</TableCell>
-                            <TableCell>{product.descripcion}</TableCell>
-                            <TableCell>{formatPrice(product.precio)}</TableCell>
-                            <TableCell className="capitalize">{product.categoria}</TableCell>
-                            <TableCell className="text-center">
-                                {product.disponible ?
-                                    <Badge className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
-                                        Disponible
-                                    </Badge> :
-                                    <Badge className="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
-                                        Agotado
-                                    </Badge>
-                                }
-                            </TableCell>
-                            <TableCell className="text-center">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                            <span className="sr-only">Open menu</span>
-                                            <MoreVerticalIcon className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setProductToEdit(product)}>
-                                                <SquarePen />
-                                                Modificar
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setProductToDelete(product)}>
-                                                <Trash />
-                                                Eliminar
-                                            </DropdownMenuItem>
-                                        </DropdownMenuGroup>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                    {filteredProducts.length ? (
+                        filteredProducts.map((product) => (
+                            <TableRow key={product._id}>
+                                <TableCell>
+                                    <ProductImage product={product} />
+                                </TableCell>
+                                <TableCell>{product.nombre}</TableCell>
+                                <TableCell>
+                                    <span className="block max-w-xs truncate">
+                                        {product.descripcion || "-"}
+                                    </span>
+                                </TableCell>
+                                <TableCell>{formatPrice(product.precio)}</TableCell>
+                                <TableCell className="capitalize">{product.categoria}</TableCell>
+                                <TableCell className="text-center">
+                                    {product.disponible ? (
+                                        <Badge className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
+                                            Disponible
+                                        </Badge>
+                                    ) : (
+                                        <Badge className="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
+                                            Agotado
+                                        </Badge>
+                                    )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <span className="sr-only">Abrir menú</span>
+                                                <MoreVerticalIcon className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem
+                                                    onClick={() => setProductToEdit(product)}
+                                                >
+                                                    <SquarePen />
+                                                    Modificar
+                                                </DropdownMenuItem>
+
+                                                <DropdownMenuItem
+                                                    variant="destructive"
+                                                    onClick={() => setProductToDelete(product)}
+                                                >
+                                                    <Trash />
+                                                    Eliminar
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell
+                                colSpan={7}
+                                className="h-24 text-center"
+                            >
+                                No hay productos registrados.
                             </TableCell>
                         </TableRow>
-                    ))}
+                    )}
                 </TableBody>
             </Table>
 

@@ -2,10 +2,12 @@ import { request } from "./api";
 
 const TOKEN_KEY = "token";
 
+// Devuelve la lista de productos desde el backend
 async function readProducts() {
     return await request("/productos");
 }
 
+// Crea un nuevo producto en el backend
 async function createProduct(product) {
     const token = localStorage.getItem(TOKEN_KEY);
 
@@ -19,6 +21,7 @@ async function createProduct(product) {
     });
 }
 
+// Actualiza un producto existente en el backend
 async function updateProduct(productId, product) {
     const token = localStorage.getItem(TOKEN_KEY);
 
@@ -32,6 +35,7 @@ async function updateProduct(productId, product) {
     });
 }
 
+// Elimina un producto existente en el backend
 async function deleteProduct(productId) {
     const token = localStorage.getItem(TOKEN_KEY);
     return await request(`/productos/${productId}`, {
@@ -42,4 +46,31 @@ async function deleteProduct(productId) {
     });
 }
 
-export { readProducts, createProduct, updateProduct, deleteProduct };
+// Sube la imagen de un producto al backend
+async function uploadProductImage(productId, file) {
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    const formData = new FormData();
+    formData.append("archivo", file);
+
+    return await request(`/productos/${productId}/imagen`, {
+        method: "POST",
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+    });
+}
+
+async function deleteProductImage(productId) {
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    return await request(`/productos/${productId}/imagen`, {
+        method: "DELETE",
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+}
+
+export { readProducts, createProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImage };
