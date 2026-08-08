@@ -54,7 +54,8 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogClose
+    DialogClose,
+    DialogTrigger,
 } from "@/components/ui/dialog"
 
 import { Button } from "@/components/ui/button"
@@ -99,19 +100,43 @@ function ProductImage({ product }) {
 
     if (!product.imagen_url || failed) {
         return (
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                <ImageIcon className="h-4 w-4" />
-            </div>
+            <Button asChild className="p-0 border-2 border-transparent hover:border-primary/80">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    <ImageIcon className="h-4 w-4" />
+                </div>
+            </Button>
         );
     }
 
     return (
-        <img
-            src={buildImageUrl(product.imagen_url)}
-            alt={product.nombre}
-            onError={() => setFailed(true)}
-            className="h-10 w-10 rounded-md object-cover"
-        />
+        <>
+            <Dialog >
+                <DialogTrigger>
+                    <Button asChild className="p-0 border-2 border-transparent hover:border-primary/90">
+                        <img
+                            src={buildImageUrl(product.imagen_url)}
+                            alt={product.nombre}
+                            onError={() => setFailed(true)}
+                            className="h-12 w-12 rounded-md object-cover"
+                        />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-xl">{product.nombre}</DialogTitle>
+                        <DialogDescription>
+                            {product.descripcion}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <img
+                        src={buildImageUrl(product.imagen_url)}
+                        alt={product.nombre}
+                        onError={() => setFailed(true)}
+                        className="w-full max-w-100 rounded-md object-cover"
+                    />
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
 
@@ -509,7 +534,7 @@ function DialogEditProduct({ product, setProduct, onUpdated }) {
 
     return (
         <Dialog open={!!product} onOpenChange={(open) => { if (!open) setProduct(null); }}>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Editar producto</DialogTitle>
                     <DialogDescription>
@@ -671,7 +696,7 @@ function ReadProduct({ refresh, filterCategoria }) {
 
                 <TableHeader>
                     <TableRow>
-                        <TableHead></TableHead>
+                        <TableHead>Imagen</TableHead>
                         <TableHead>Nombre</TableHead>
                         <TableHead>Descripción</TableHead>
                         <TableHead>Precio</TableHead>
@@ -691,7 +716,7 @@ function ReadProduct({ refresh, filterCategoria }) {
                                 <TableCell>{product.nombre}</TableCell>
                                 <TableCell>
                                     <span className="block max-w-xs truncate">
-                                        {product.descripcion || "-"}
+                                        {product.descripcion || "Sin descripción"}
                                     </span>
                                 </TableCell>
                                 <TableCell>{formatPrice(product.precio)}</TableCell>

@@ -88,7 +88,7 @@ function NotificationsPopover() {
                     <Bell />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="min-h-50 w-full max-w-100" align="end">
+            <PopoverContent className="min-h-50 w-full max-w-75 sm:max-w-100" align="end">
                 <div className="flex justify-between items-center">
                     <h2 className="font-medium text-lg">Notificaciones</h2>
                     <span className="flex rounded justify-center items-center text-md border w-8 h-8">{DashboardNotifications.length}</span>
@@ -132,19 +132,19 @@ function BreadCrumb() {
     return (
         <>
             <Breadcrumb>
-                <BreadcrumbList>
+                <BreadcrumbList className="flex flex-nowrap justify-end overflow-auto max-w-40 md:max-w-full">
                     {segments.map((segment, index) => {
                         const path = "/" + segments.slice(0, index + 1).join("/");
                         const label = breadcrumbLabels[segment] || segment;
                         const isLast = index === segments.length - 1;
 
                         return (
-                            <React.Fragment key={path}>
+                            <React.Fragment key={path} >
                                 {index > 0 && <BreadcrumbSeparator />}
 
                                 {isLast ? (
                                     <BreadcrumbPage>{label}</BreadcrumbPage>
-                                ) : segment === "detalle" ? (
+                                ) : segment === "inventario" ? (
                                     <BreadcrumbLink className="cursor-default">{label}</BreadcrumbLink>
                                 ) : (
                                     <BreadcrumbLink asChild>
